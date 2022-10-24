@@ -1,6 +1,6 @@
 seed: 1
 
-type: base
+type: fed
 mode: train
 
 epochs: 10
