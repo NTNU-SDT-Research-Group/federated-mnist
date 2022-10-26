@@ -1,6 +1,7 @@
 from utils.check_gpu import get_training_device
 from utils.config_parser import get_config_data
 from baseline import train as train_baseline
+from federated import train as train_federated
 import argparse
 import os
 
@@ -26,4 +27,7 @@ config = get_config_data(args.experiment_file)
 device = get_training_device()
 
 if config['mode'] == 'train':
-  train_baseline(config, device)
+  if config['type'] == 'base':
+    train_baseline(config, device)
+  else:
+    train_federated(config, device)

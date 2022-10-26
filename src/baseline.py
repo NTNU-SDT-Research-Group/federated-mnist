@@ -35,7 +35,7 @@ def train(config, device):
     )
 
     # load model
-    global_model = model_factory.get_model(
+    model = model_factory.get_model(
         config["model"],
         num_channels=config["num_channels"],
         num_classes=config["num_classes"]
@@ -43,7 +43,7 @@ def train(config, device):
 
     # load optimiser
     optimiser = optimiser_factory.get_optimiser(
-        global_model.parameters(),
+        model.parameters(),
         config["optimiser"],
         hyper_params={
             "learning_rate": config["lr"],
@@ -60,7 +60,7 @@ def train(config, device):
     epoch_loss = []
 
     for epoch in tqdm(range(config["epochs"])):
-        global_model.train()
+        model.train()
 
         batch_loss = []
 
@@ -68,7 +68,7 @@ def train(config, device):
             images, labels = images.to(device), labels.to(device)
 
             optimiser.zero_grad()
-            outputs = global_model(images)
+            outputs = model(images)
             loss = criterion(outputs, labels)
             loss.backward()
             optimiser.step()
@@ -84,6 +84,6 @@ def train(config, device):
         epoch_loss.append(loss_avg)
 
     # testing
-    test_acc, _ = eval(device, global_model, criterion, test_dataset)
+    test_acc, _ = eval(device, model, criterion, test_dataset)
     print('Test on', len(test_dataset), 'samples')
     print("Test Accuracy: {:.2f}%".format(100*test_acc))

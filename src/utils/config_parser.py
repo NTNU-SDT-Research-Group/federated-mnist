@@ -8,6 +8,10 @@ def hydrate_config(config):
         raise Exception("[ Mode not found in config ]")
 
     if config['mode'] == 'train':
+        # type
+        if 'type' not in config.keys():
+            config['seed'] = 'base'
+            
         # basics
         if 'seed' not in config.keys():
             config['seed'] = 1
