@@ -4,13 +4,12 @@ from baseline import train as train_baseline
 from federated import train as train_federated
 import argparse
 import os
+import wandb
 
 # stop tensorboard warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # stop W&B logs
 os.environ['WANDB_SILENT'] = 'true'
-
-# from eval import eval
 
 # Parse arguments
 parser = argparse.ArgumentParser()
@@ -22,6 +21,18 @@ args = parser.parse_args()
 if args.experiment_file is None:
     exit()
 config = get_config_data(args.experiment_file)
+
+# W&B setup
+wandb.init(
+  project="federated-learning", entity="ntnu-sustainable-digital-transformation-group",
+  config={
+    "lr": config["lr"],
+    "optimiser": config["optimiser"],
+    "model": config["model"],
+    "type": config["type"],
+    "dataset": config["dataset"],
+  }
+)
 
 # Get GPU / CPU device instance
 device = get_training_device()

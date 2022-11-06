@@ -13,6 +13,7 @@ from tqdm import tqdm
 from tqdm import tqdm
 
 from torch.utils.data import DataLoader, Dataset
+import wandb
 from datasets.dataset_factory import DatasetFactory
 from losses.loss_factory import LossFactory
 from optimisers.optimiser_factory import OptimiserFactory
@@ -38,7 +39,8 @@ def train(config, device):
         transformer=transformer_factory.get_transformer(
             pipe_type="default"
         ),
-        num_users=config["num_users"]
+        num_users=config["num_users"],
+        custom_non_iid=config["custom_non_iid"]
     )
 
     # load model
@@ -48,17 +50,15 @@ def train(config, device):
         num_classes=config["num_classes"]
     ).to(device)
 
-    # trainloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-
-    # copy weights
-    global_weights = global_model.state_dict()
-
     # Training
     train_loss, train_accuracy = [], []
     val_acc_list, net_list = [], []
     cv_loss, cv_acc = [], []
     print_every = 2
     val_loss_pre, counter = 0, 0
+
+    # copy weights
+    global_weights = global_model.state_dict()
 
     start_time = time.time()
 
@@ -88,7 +88,12 @@ def train(config, device):
         loss_avg = sum(local_losses) / len(local_losses)
         train_loss.append(loss_avg)
 
+        # log global loss
+        wandb.log({"loss": loss_avg})
+
         # Calculate avg training accuracy over all users at every epoch
+        # we are doing it here since calculating loss for a round makes senses
+        # after the round is completed (even for local updates)
         list_acc, list_loss = [], []
         global_model.eval()
         for _ in range(config["num_users"]):
@@ -109,20 +114,11 @@ def train(config, device):
     loss_factory = LossFactory()
     criterion = loss_factory.get_loss_function(
         "negative-log-likelihood-loss", silent=True).to(device)
-    test_acc, _ = eval(device, global_model, criterion, test_dataset)
+    test_acc, _ = eval(device, global_model, criterion, test_dataset, wandb)
 
     print(f' \n Results after {config["epochs"]} global rounds of training:')
     print("|---- Avg Train Accuracy: {:.2f}%".format(100*train_accuracy[-1]))
     print("|---- Test Accuracy: {:.2f}%".format(100*test_acc))
-
-    # Saving the objects train_loss and train_accuracy:
-    # file_name = '../save/objects/{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}].pkl'.\
-    #     format(args.dataset, args.model, config["epochs"], config["frac"], args.iid,
-    #             args.local_ep, args.local_bs)
-
-    # with open(file_name, 'wb') as f:
-    #     pickle.dump([train_loss, train_accuracy], f)
-
     print('\n Total Run Time: {0:0.4f}'.format(time.time()-start_time))
 
 
@@ -130,7 +126,7 @@ class LocalUpdate(object):
     def __init__(self, config, device, dataset, idxs):
         self.config = config
         self.trainloader, self.validloader, self.testloader = self.train_val_test(
-            dataset, list(idxs))
+            dataset, list(idxs)) # converting set to list
         self.device = device
 
         # loss

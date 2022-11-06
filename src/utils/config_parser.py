@@ -10,7 +10,7 @@ def hydrate_config(config):
     if config['mode'] == 'train':
         # type
         if 'type' not in config.keys():
-            config['seed'] = 'base'
+            config['type'] = 'base'
             
         # basics
         if 'seed' not in config.keys():
@@ -31,14 +31,14 @@ def hydrate_config(config):
         # dataset (train)
         if 'dataset' not in config.keys():
             config['dataset'] = "mnist"
+        if 'custom_non_iid' not in config.keys():
+            config['custom_non_iid'] = False
 
         # model
         if 'model' not in config.keys():
             config['model'] = "cnn-mnist"
         if 'lr' not in config.keys():
             config['lr'] = 0.01
-        if 'norm' not in config.keys():
-            config['norm'] = "batch_norm"
         if 'num_channels' not in config.keys():
             config['num_channels'] = 1
         if 'num_filters' not in config.keys():

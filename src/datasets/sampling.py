@@ -14,3 +14,25 @@ def mnist_iid(dataset, num_users):
                                              replace=False))
         all_idxs = list(set(all_idxs) - dict_users[i])
     return dict_users
+
+def mnist_custom_non_iid(dataset):
+    print("[Custom non-iid]")
+    """
+    We need 10 users for this custom case
+    """
+    dict_users = {
+        0: set(),
+        1: set(),
+        2: set(),
+        3: set(),
+        4: set(),
+        5: set(),
+        6: set(),
+        7: set(),
+        8: set(),
+        9: set()
+    }
+    for idx in range(len(dataset)):
+        _, label = dataset[idx]
+        dict_users[label].add(idx)
+    return dict_users

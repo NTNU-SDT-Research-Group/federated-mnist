@@ -1,6 +1,7 @@
 from tqdm import tqdm
 
 from torch.utils.data import DataLoader
+import wandb
 from datasets.dataset_factory import DatasetFactory
 from losses.loss_factory import LossFactory
 from optimisers.optimiser_factory import OptimiserFactory
@@ -67,11 +68,11 @@ def train(config, device):
         for batch_idx, (images, labels) in enumerate(trainloader):
             images, labels = images.to(device), labels.to(device)
 
-            optimiser.zero_grad()
+            optimiser.zero_grad() # reset gradients
             outputs = model(images)
             loss = criterion(outputs, labels)
-            loss.backward()
-            optimiser.step()
+            loss.backward() # compute gradients
+            optimiser.step() # update weights (back propogation)
 
             if batch_idx % 50 == 0:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
@@ -83,7 +84,12 @@ def train(config, device):
         print('\nTrain loss:', loss_avg)
         epoch_loss.append(loss_avg)
 
+        wandb.log({"loss": loss_avg})
+
+        # Optional
+        wandb.watch(model)
+
     # testing
-    test_acc, _ = eval(device, model, criterion, test_dataset)
+    test_acc, _ = eval(device, model, criterion, test_dataset, wandb)
     print('Test on', len(test_dataset), 'samples')
     print("Test Accuracy: {:.2f}%".format(100*test_acc))
